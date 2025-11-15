@@ -1,198 +1,507 @@
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
-// Definição da struct Item para representar cada item do inventário
+// Struct para cada item do inventário
 typedef struct {
-    char nome[30];      // Nome do item (ex: "AK-47", "Kit Médico")
-    char tipo[20];      // Tipo do item (ex: "arma", "munição", "cura")
-    int quantidade;     // Quantidade do item no inventário
+    char nome[30];      
+    char tipo[20];      
+    int quantidade;     
 } Item;
 
+// Nó da lista encadeada
+typedef struct No {
+    Item dados;         
+    struct No* proximo; 
+} No;
+
 // Variáveis globais
-Item mochila[10];       // Vetor para armazenar até 10 itens
-int totalItens = 0;     // Contador de itens atualmente na mochila
+Item inventarioArray[10];  
+int totalItens = 0; 
 
-// Função para limpar o buffer de entrada
-void limparBuffer() {
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF);
+No* listaInventario = NULL; 
+
+int contadorBuscaSeq = 0;
+int contadorBuscaBin = 0;
+
+// ========== UTILITÁRIOS ==========
+
+void limpaBuffer() {
+    int ch;
+    while ((ch = getchar()) != '\n' && ch != EOF);
 }
 
-// Função para inserir um novo item na mochila
-void inserirItem() {
-    // Verifica se a mochila está cheia
+// ========== OPERAÇÕES COM ARRAY ==========
+
+void adicionarNoArray() {
     if (totalItens >= 10) {
-        printf("\n MOCHILA CHEIA! Não é possível adicionar mais itens.\n");
+        printf("\nInventário cheio! Remova algum item primeiro.\n");
         return;
     }
 
-    printf("\n--- CADASTRAR NOVO ITEM ---\n");
+    printf("\n=== Adicionando item no array ===\n");
+    
+    printf("Nome do item: ");
+    scanf("%s", inventarioArray[totalItens].nome);
+    
+    printf("Tipo (arma/municao/cura/ferramenta): ");
+    scanf("%s", inventarioArray[totalItens].tipo);
+    
+    printf("Quantidade: ");
+    scanf("%d", &inventarioArray[totalItens].quantidade);
 
-    // Lê o nome do item
-    printf("Digite o nome do item: ");
-    scanf("%s", mochila[totalItens].nome);
-
-    // Lê o tipo do item
-    printf("Digite o tipo do item (arma/munição/cura/ferramenta): ");
-    scanf("%s", mochila[totalItens].tipo);
-
-    // Lê a quantidade do item
-    printf("Digite a quantidade: ");
-    scanf("%d", &mochila[totalItens].quantidade);
-
-    // Incrementa o contador de itens
     totalItens++;
-
-    printf("Item cadastrado com sucesso!\n");
+    printf("Item adicionado!\n");
 }
 
-// Função para remover um item da mochila pelo nome
-void removerItem() {
-    // Verifica se a mochila está vazia
+void removerDoArray() {
     if (totalItens == 0) {
-        printf("\nMOCHILA VAZIA! Não há itens para remover.\n");
+        printf("\nInventário vazio!\n");
         return;
     }
 
-    char nomeRemover[30];
-    int encontrado = 0;
-    int posicao = -1;
+    char nomeItem[30];
+    int achou = 0;
+    int pos = -1;
 
-    printf("\n--- REMOVER ITEM ---\n");
-    printf("Digite o nome do item a ser removido: ");
-    scanf("%s", nomeRemover);
+    printf("\n=== Removendo item do array ===\n");
+    printf("Nome do item para remover: ");
+    scanf("%s", nomeItem);
 
-    // Busca o item na mochila
+    // Procura o item
     for (int i = 0; i < totalItens; i++) {
-        if (strcmp(mochila[i].nome, nomeRemover) == 0) {
-            encontrado = 1;
-            posicao = i;
+        if (strcmp(inventarioArray[i].nome, nomeItem) == 0) {
+            achou = 1;
+            pos = i;
             break;
         }
     }
 
-    // Se o item foi encontrado, remove-o
-    if (encontrado) {
-        // Move todos os itens após a posição encontrada uma posição para trás
-        for (int i = posicao; i < totalItens - 1; i++) {
-            mochila[i] = mochila[i + 1];
+    if (achou) {
+        // Desloca os elementos
+        for (int i = pos; i < totalItens - 1; i++) {
+            inventarioArray[i] = inventarioArray[i + 1];
         }
         totalItens--;
-        printf("Item '%s' removido com sucesso!\n", nomeRemover);
+        printf("Item '%s' removido!\n", nomeItem);
     } else {
-        printf("Item '%s' não encontrado na mochila.\n", nomeRemover);
+        printf("Item '%s' nao encontrado.\n", nomeItem);
     }
 }
 
-// Função para listar todos os itens da mochila
-void listarItens() {
-    printf("\n--- INVENTÁRIO DA MOCHILA ---\n");
-
-    // Verifica se a mochila está vazia
+void mostrarArray() {
+    printf("\n=== Inventário (Array) ===\n");
+    
     if (totalItens == 0) {
-        printf("Mochila vazia. Colete alguns itens!\n");
+        printf("Nenhum item no inventário.\n");
         return;
     }
 
-    printf("Total de itens: %d/10\n", totalItens);
-    printf("----------------------------------------\n");
-
-    // Lista todos os itens
+    printf("Total: %d/10 itens\n", totalItens);
+    printf("------------------------\n");
+    
     for (int i = 0; i < totalItens; i++) {
-        printf("%d. Nome: %s | Tipo: %s | Quantidade: %d\n",
-               i + 1, mochila[i].nome, mochila[i].tipo, mochila[i].quantidade);
+        printf("%d) %s [%s] x%d\n",
+               i + 1, inventarioArray[i].nome, inventarioArray[i].tipo, inventarioArray[i].quantidade);
     }
-    printf("----------------------------------------\n");
 }
 
-// Função para buscar um item específico na mochila
-void buscarItem() {
-    // Verifica se a mochila está vazia
+void buscaLinearArray() {
     if (totalItens == 0) {
-        printf("\n⚠MOCHILA VAZIA! Não há itens para buscar.\n");
+        printf("\nArray vazio!\n");
         return;
     }
 
-    char nomeBuscar[30];
-    int encontrado = 0;
+    char itemProcurado[30];
+    int achou = 0;
+    contadorBuscaSeq = 0;
 
-    printf("\n--- BUSCAR ITEM ---\n");
-    printf("Digite o nome do item a ser buscado: ");
-    scanf("%s", nomeBuscar);
+    printf("\n=== Busca Linear ===\n");
+    printf("Item a procurar: ");
+    scanf("%s", itemProcurado);
 
-    // Busca sequencial pelo nome do item
+    clock_t inicio = clock();
+    
     for (int i = 0; i < totalItens; i++) {
-        if (strcmp(mochila[i].nome, nomeBuscar) == 0) {
-            printf("\n🔍 ITEM ENCONTRADO!\n");
-            printf("Nome: %s\n", mochila[i].nome);
-            printf("Tipo: %s\n", mochila[i].tipo);
-            printf("Quantidade: %d\n", mochila[i].quantidade);
-            printf("Posição na mochila: %d\n", i + 1);
-            encontrado = 1;
+        contadorBuscaSeq++;
+        if (strcmp(inventarioArray[i].nome, itemProcurado) == 0) {
+            clock_t fim = clock();
+            double duracao = ((double)(fim - inicio)) / CLOCKS_PER_SEC;
+            
+            printf("\nEncontrado!\n");
+            printf("Item: %s\n", inventarioArray[i].nome);
+            printf("Tipo: %s\n", inventarioArray[i].tipo);
+            printf("Qtd: %d\n", inventarioArray[i].quantidade);
+            printf("Posição: %d\n", i + 1);
+            printf("Comparações: %d\n", contadorBuscaSeq);
+            printf("Tempo: %.6f seg\n", duracao);
+            achou = 1;
             break;
         }
     }
 
-    if (!encontrado) {
-        printf("Item '%s' não encontrado na mochila.\n", nomeBuscar);
+    if (!achou) {
+        clock_t fim = clock();
+        double duracao = ((double)(fim - inicio)) / CLOCKS_PER_SEC;
+        printf("Item '%s' não foi encontrado.\n", itemProcurado);
+        printf("Comparações: %d\n", contadorBuscaSeq);
+        printf("Tempo: %.6f seg\n", duracao);
     }
 }
 
-// Função para exibir o menu principal
-void exibirMenu() {
-    printf("\n=======================================\n");
-    printf("🎮 SISTEMA DE INVENTÁRIO - MOCHILA LOOT\n");
-    printf("=======================================\n");
-    printf("1. Cadastrar item\n");
-    printf("2. Remover item\n");
-    printf("3. Listar todos os itens\n");
-    printf("4. Buscar item\n");
-    printf("5. Sair do jogo\n");
-    printf("=======================================\n");
-    printf("Escolha uma opção (1-5): ");
+void ordenarArray() {
+    if (totalItens <= 1) {
+        printf("\nPoucos itens para ordenar.\n");
+        return;
+    }
+
+    printf("\n=== Ordenando por nome ===\n");
+    
+    clock_t inicio = clock();
+    
+    // Bubble sort simples
+    for (int i = 0; i < totalItens - 1; i++) {
+        for (int j = 0; j < totalItens - i - 1; j++) {
+            if (strcmp(inventarioArray[j].nome, inventarioArray[j + 1].nome) > 0) {
+                Item temp = inventarioArray[j];
+                inventarioArray[j] = inventarioArray[j + 1];
+                inventarioArray[j + 1] = temp;
+            }
+        }
+    }
+    
+    clock_t fim = clock();
+    double duracao = ((double)(fim - inicio)) / CLOCKS_PER_SEC;
+    
+    printf("Array ordenado!\n");
+    printf("Tempo: %.6f seg\n", duracao);
 }
 
-// Função principal do programa
-int main() {
+void buscaBinariaArray() {
+    if (totalItens == 0) {
+        printf("\nArray vazio!\n");
+        return;
+    }
+
+    char itemProcurado[30];
+    contadorBuscaBin = 0;
+
+    printf("\n=== Busca Binária ===\n");
+    printf("IMPORTANTE: Array precisa estar ordenado!\n");
+    printf("Item a procurar: ");
+    scanf("%s", itemProcurado);
+
+    clock_t inicio = clock();
+    
+    int esq = 0;
+    int dir = totalItens - 1;
+    int achou = 0;
+    
+    while (esq <= dir) {
+        int meio = (esq + dir) / 2;
+        contadorBuscaBin++;
+        
+        int comp = strcmp(inventarioArray[meio].nome, itemProcurado);
+        
+        if (comp == 0) {
+            clock_t fim = clock();
+            double duracao = ((double)(fim - inicio)) / CLOCKS_PER_SEC;
+            
+            printf("\nEncontrado com busca binária!\n");
+            printf("Item: %s\n", inventarioArray[meio].nome);
+            printf("Tipo: %s\n", inventarioArray[meio].tipo);
+            printf("Qtd: %d\n", inventarioArray[meio].quantidade);
+            printf("Posição: %d\n", meio + 1);
+            printf("Comparações: %d\n", contadorBuscaBin);
+            printf("Tempo: %.6f seg\n", duracao);
+            achou = 1;
+            break;
+        } else if (comp < 0) {
+            esq = meio + 1;
+        } else {
+            dir = meio - 1;
+        }
+    }
+    
+    if (!achou) {
+        clock_t fim = clock();
+        double duracao = ((double)(fim - inicio)) / CLOCKS_PER_SEC;
+        printf("Item '%s' não encontrado.\n", itemProcurado);
+        printf("Comparações: %d\n", contadorBuscaBin);
+        printf("Tempo: %.6f seg\n", duracao);
+    }
+}
+
+// ========== OPERAÇÕES COM LISTA ==========
+
+int contaItensLista() {
+    int contador = 0;
+    No* atual = listaInventario;
+    while (atual != NULL) {
+        contador++;
+        atual = atual->proximo;
+    }
+    return contador;
+}
+
+void adicionarNaLista() {
+    if (contaItensLista() >= 10) {
+        printf("\nLista cheia!\n");
+        return;
+    }
+
+    No* novoItem = (No*)malloc(sizeof(No));
+    if (novoItem == NULL) {
+        printf("\nErro de memória!\n");
+        return;
+    }
+
+    printf("\n=== Adicionando item na lista ===\n");
+    
+    printf("Nome do item: ");
+    scanf("%s", novoItem->dados.nome);
+    
+    printf("Tipo: ");
+    scanf("%s", novoItem->dados.tipo);
+    
+    printf("Quantidade: ");
+    scanf("%d", &novoItem->dados.quantidade);
+
+    // Adiciona no início
+    novoItem->proximo = listaInventario;
+    listaInventario = novoItem;
+
+    printf("Item adicionado na lista!\n");
+}
+
+void removerDaLista() {
+    if (listaInventario == NULL) {
+        printf("\nLista vazia!\n");
+        return;
+    }
+
+    char nomeItem[30];
+    printf("\n=== Removendo da lista ===\n");
+    printf("Nome do item: ");
+    scanf("%s", nomeItem);
+
+    No* atual = listaInventario;
+    No* anterior = NULL;
+
+    while (atual != NULL) {
+        if (strcmp(atual->dados.nome, nomeItem) == 0) {
+            if (anterior == NULL) {
+                listaInventario = atual->proximo;
+            } else {
+                anterior->proximo = atual->proximo;
+            }
+            
+            free(atual);
+            printf("Item '%s' removido da lista!\n", nomeItem);
+            return;
+        }
+        
+        anterior = atual;
+        atual = atual->proximo;
+    }
+
+    printf("Item '%s' não encontrado na lista.\n", nomeItem);
+}
+
+void mostrarLista() {
+    printf("\n=== Inventário (Lista) ===\n");
+    
+    if (listaInventario == NULL) {
+        printf("Lista vazia.\n");
+        return;
+    }
+
+    int qtd = contaItensLista();
+    printf("Total: %d/10 itens\n", qtd);
+    printf("------------------------\n");
+    
+    No* atual = listaInventario;
+    int pos = 1;
+    
+    while (atual != NULL) {
+        printf("%d) %s [%s] x%d\n",
+               pos, atual->dados.nome, atual->dados.tipo, atual->dados.quantidade);
+        atual = atual->proximo;
+        pos++;
+    }
+}
+
+void procurarNaLista() {
+    if (listaInventario == NULL) {
+        printf("\nLista vazia!\n");
+        return;
+    }
+
+    char itemProcurado[30];
+    int comparacoes = 0;
+
+    printf("\n=== Busca na Lista ===\n");
+    printf("Item: ");
+    scanf("%s", itemProcurado);
+
+    clock_t inicio = clock();
+    
+    No* atual = listaInventario;
+    int pos = 1;
+
+    while (atual != NULL) {
+        comparacoes++;
+        if (strcmp(atual->dados.nome, itemProcurado) == 0) {
+            clock_t fim = clock();
+            double duracao = ((double)(fim - inicio)) / CLOCKS_PER_SEC;
+            
+            printf("\nEncontrado na lista!\n");
+            printf("Item: %s\n", atual->dados.nome);
+            printf("Tipo: %s\n", atual->dados.tipo);
+            printf("Qtd: %d\n", atual->dados.quantidade);
+            printf("Posição: %d\n", pos);
+            printf("Comparações: %d\n", comparacoes);
+            printf("Tempo: %.6f seg\n", duracao);
+            return;
+        }
+        
+        atual = atual->proximo;
+        pos++;
+    }
+
+    clock_t fim = clock();
+    double duracao = ((double)(fim - inicio)) / CLOCKS_PER_SEC;
+    printf("Item '%s' não encontrado na lista.\n", itemProcurado);
+    printf("Comparações: %d\n", comparacoes);
+    printf("Tempo: %.6f seg\n", duracao);
+}
+
+// ========== MENUS ==========
+
+void menuArray() {
     int opcao;
-
-    printf("BEM-VINDO AO SISTEMA DE INVENTÁRIO!\n");
-    printf("Organize a mochila e sobreviva!\n");
-
-    // Loop principal do menu
     do {
-        exibirMenu();
+        printf("\n>>> MENU ARRAY <<<\n");
+        printf("1 - Adicionar item\n");
+        printf("2 - Remover item\n");
+        printf("3 - Listar itens\n");
+        printf("4 - Busca linear\n");
+        printf("5 - Ordenar\n");
+        printf("6 - Busca binária\n");
+        printf("7 - Voltar\n");
+        printf("Opção: ");
+        
         scanf("%d", &opcao);
-        limparBuffer(); // Limpa o buffer após scanf
+        limpaBuffer();
 
-        // Executa a ação baseada na opção escolhida
         switch (opcao) {
-            case 1:
-                inserirItem();
-                break;
-            case 2:
-                removerItem();
-                break;
-            case 3:
-                listarItens();
-                break;
-            case 4:
-                buscarItem();
-                break;
-            case 5:
-                printf("\nObrigado!\n");
-                break;
-            default:
-                printf("\nOpção inválida! Escolha um número de 1 a 5.\n");
+            case 1: adicionarNoArray(); break;
+            case 2: removerDoArray(); break;
+            case 3: mostrarArray(); break;
+            case 4: buscaLinearArray(); break;
+            case 5: ordenarArray(); break;
+            case 6: buscaBinariaArray(); break;
+            case 7: printf("Voltando...\n"); break;
+            default: printf("Opção inválida!\n");
         }
+    } while (opcao != 7);
+}
 
-        // Lista os itens após cada operação (exceto ao sair)
-        if (opcao != 5 && opcao >= 1 && opcao <= 4) {
-            listarItens();
+void menuLista() {
+    int opcao;
+    do {
+        printf("\n>>> MENU LISTA <<<\n");
+        printf("1 - Adicionar item\n");
+        printf("2 - Remover item\n");
+        printf("3 - Listar itens\n");
+        printf("4 - Buscar item\n");
+        printf("5 - Voltar\n");
+        printf("Opção: ");
+        
+        scanf("%d", &opcao);
+        limpaBuffer();
+
+        switch (opcao) {
+            case 1: adicionarNaLista(); break;
+            case 2: removerDaLista(); break;
+            case 3: mostrarLista(); break;
+            case 4: procurarNaLista(); break;
+            case 5: printf("Voltando...\n"); break;
+            default: printf("Opção inválida!\n");
         }
-
     } while (opcao != 5);
+}
+
+void analisarPerformance() {
+    printf("\n=== ANÁLISE DE PERFORMANCE ===\n");
+    printf("Array: %d/10 itens\n", totalItens);
+    printf("Lista: %d/10 itens\n", contaItensLista());
+    printf("\nÚltimas buscas:\n");
+    printf("- Busca linear: %d comparações\n", contadorBuscaSeq);
+    printf("- Busca binária: %d comparações\n", contadorBuscaBin);
+    
+    printf("\n--- Comparação das estruturas ---\n");
+    printf("ARRAY:\n");
+    printf("  • Acesso direto rápido\n");
+    printf("  • Busca binária após ordenação\n");
+    printf("  • Melhor uso da cache\n");
+    printf("  • Inserção/remoção no meio é lenta\n");
+    printf("  • Tamanho fixo\n");
+    
+    printf("\nLISTA ENCADEADA:\n");
+    printf("  • Inserção/remoção no início é rápida\n");
+    printf("  • Tamanho flexível\n");
+    printf("  • Sem desperdício de memória\n");
+    printf("  • Acesso sequencial apenas\n");
+    printf("  • Busca binária impraticável\n");
+    printf("  • Overhead dos ponteiros\n");
+}
+
+void liberaMemoria() {
+    No* atual = listaInventario;
+    while (atual != NULL) {
+        No* proximo = atual->proximo;
+        free(atual);
+        atual = proximo;
+    }
+    listaInventario = NULL;
+}
+
+int main() {
+    int escolha;
+
+    printf("Sistema de Inventário\n");
+    printf("Comparação: Array vs Lista Encadeada\n");
+
+    do {
+        printf("\n===================================\n");
+        printf("    INVENTÁRIO - COMPARAÇÃO\n");
+        printf("===================================\n");
+        printf("1. Trabalhar com Array\n");
+        printf("2. Trabalhar com Lista Encadeada\n");
+        printf("3. Analisar Performance\n");
+        printf("4. Sair\n");
+        printf("===================================\n");
+        printf("Sua escolha: ");
+        
+        scanf("%d", &escolha);
+        limpaBuffer();
+
+        switch (escolha) {
+            case 1: menuArray(); break;
+            case 2: menuLista(); break;
+            case 3: analisarPerformance(); break;
+            case 4: 
+                printf("\nLimpando memória...\n");
+                liberaMemoria();
+                printf("Até mais!\n");
+                break;
+            default: printf("Opção inválida!\n");
+        }
+
+    } while (escolha != 4);
 
     return 0;
 }
