@@ -11,7 +11,6 @@ typedef struct {
     int quantidade;     
 } Item;
 
-// Nó da lista encadeada
 typedef struct No {
     Item dados;         
     struct No* proximo; 
